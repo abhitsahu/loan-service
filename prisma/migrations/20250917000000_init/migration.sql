@@ -1,9 +1,4 @@
--- ---------- extensions ----------
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
--- Enum types are NOT defined in the DB.
--- Valid values are enforced by CHECK constraints below.
--- App-layer source of truth: src/app/api/model/enums/
 
 -- ---------- loans ----------
 CREATE TABLE loans (

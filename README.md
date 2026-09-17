@@ -35,7 +35,7 @@ This redirects automatically to the seeded demo loan. You can also open `http://
 npm test
 ```
 
-Runs **12 unit tests** (no DB required) + **6 integration tests** (require `TEST_DATABASE_URL`).
+Runs **47 tests**: 41 unit (no DB required) + 6 integration (require `TEST_DATABASE_URL`).
 
 ---
 
@@ -113,7 +113,7 @@ No `float`, `double`, or `real` anywhere in the system.
 | J5 | Overpayment | Rolls forward to next installments; no re-amortisation |
 | J6 | Surplus beyond full settlement | Held as `unallocatedAmount`, loan CLOSED, no refund |
 | J7 | Late payment | No penalty; surfaced as `overdueAmount + daysPastDue + isLate` |
-| J8 | Duplicate payments | `Idempotency-Key` header, DB UNIQUE constraint, replay 200 |
+| J8 | Duplicate payments | `Idempotency-Key` header, DB UNIQUE constraint, replay returns `201` (same body, no second allocation) |
 | J9 | Zero-interest loan | `EMI = round2(P / n)` |
 | J10 | Money over the wire | Strings, not JSON numbers |
 | J11 | Payment on closed loan | `409 LOAN_ALREADY_CLOSED` |

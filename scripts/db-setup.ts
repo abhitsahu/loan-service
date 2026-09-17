@@ -11,5 +11,5 @@ function run(cmd: string) {
 }
 
 run('npx prisma migrate deploy');
-run('npx prisma db seed');
+run('npx tsx prisma/seed.ts');
 console.log(' Database is ready.');

@@ -79,12 +79,12 @@ async function seedLoan() {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
-  console.log('\n🌱 Seeding…\n');
+  console.log('\nSeeding…\n');
 
-  console.log('① Firebase test user');
+  console.log('Firebase test user');
   await seedFirebaseUser();
 
-  console.log('\n② Demo loan');
+  console.log('\nDemo loan');
   const loan = await seedLoan();
   if (loan) {
     console.log(`   ID:     ${loan.id}`);

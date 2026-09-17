@@ -16,12 +16,17 @@ export default function AppLanding() {
       router.replace('/app/login');
       return;
     }
-    const lastId = localStorage.getItem('lastLoanId');
-    if (lastId) {
-      router.replace(`/app/loans/${lastId}`);
-    } else {
-      setStatus('No loan found. Create one via POST /api/loans and navigate to /app/loans/<id>.');
-    }
+
+    loanClient.listLoans().then((body) => {
+      const loans = body.success ? body.data : [];
+      if (Array.isArray(loans) && loans.length > 0) {
+        router.replace(`/app/loans/${loans[0].id}`);
+      } else {
+        setStatus('No loan found. Run `npm run db:setup` to seed one, then refresh.');
+      }
+    }).catch(() => {
+      setStatus('Failed to load loans. Check your .env and try again.');
+    });
   }, [user, loading, router]);
 
   return (

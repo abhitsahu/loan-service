@@ -23,16 +23,16 @@ export function ScheduleTable({ schedule }: Props) {
       <table className="table" aria-label="Repayment schedule">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Due Date</th>
-            <th>Opening Balance</th>
-            <th>Interest</th>
-            <th>Principal</th>
-            <th>Total Due</th>
-            <th>Amount Paid</th>
-            <th>Remaining</th>
-            <th>Closing Balance</th>
-            <th>Status</th>
+            <th className="text-center">#</th>
+            <th className="text-left">Due Date</th>
+            <th className="text-right">Opening Balance</th>
+            <th className="text-right">Interest</th>
+            <th className="text-right">Principal</th>
+            <th className="text-right">Total Due</th>
+            <th className="text-right">Amount Paid</th>
+            <th className="text-right">Remaining</th>
+            <th className="text-right">Closing Balance</th>
+            <th className="text-left">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -44,30 +44,30 @@ export function ScheduleTable({ schedule }: Props) {
                 row.status === 'PAID' ? 'row-paid' : '',
               )}
             >
-              <td className="mono">{row.installmentNumber}</td>
-              <td>
-                {row.dueDate}
+              <td className="mono text-center">{row.installmentNumber}</td>
+              <td className="text-left">
+                <span className="mono">{row.dueDate}</span>
                 {row.isOverdue && row.status !== 'PAID' && (
                   <span className="badge badge-rose" style={{ marginLeft: '0.5rem', fontSize: '0.65rem' }}>
                     +{row.daysPastDue}d
                   </span>
                 )}
               </td>
-              <td className="mono">{fmt(row.openingBalance)}</td>
-              <td className="mono text-warn">{fmt(row.interestComponent)}</td>
-              <td className="mono">{fmt(row.principalComponent)}</td>
-              <td className="mono" style={{ fontWeight: 600 }}>{fmt(row.totalDue)}</td>
-              <td className="mono text-accent">{fmt(row.amountPaid)}</td>
-              <td className="mono" style={{ color: parseFloat(row.remainingDue) > 0 ? 'var(--color-danger)' : 'inherit' }}>
+              <td className="mono text-right">{fmt(row.openingBalance)}</td>
+              <td className="mono text-warn text-right">{fmt(row.interestComponent)}</td>
+              <td className="mono text-right">{fmt(row.principalComponent)}</td>
+              <td className="mono text-right" style={{ fontWeight: 600 }}>{fmt(row.totalDue)}</td>
+              <td className="mono text-accent text-right">{fmt(row.amountPaid)}</td>
+              <td className="mono text-right" style={{ color: parseFloat(row.remainingDue) > 0 ? 'var(--color-danger)' : 'inherit' }}>
                 {fmt(row.remainingDue)}
               </td>
-              <td className="mono">{fmt(row.closingBalance)}</td>
-              <td>
+              <td className="mono text-right">{fmt(row.closingBalance)}</td>
+              <td className="text-left">
                 <span className={STATUS_BADGE[row.status] ?? 'badge badge-gray'}>
                   {row.status.replace('_', ' ')}
                 </span>
                 {row.settledOn && (
-                  <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  <span className="mono" style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                     {row.settledOn}
                   </span>
                 )}

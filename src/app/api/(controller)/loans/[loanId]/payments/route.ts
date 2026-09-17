@@ -8,7 +8,7 @@ import { recordPayment } from '@/app/service/payment/payment.service';
 export const POST = withErrorHandling(
   async (req: NextRequest, ctx: unknown) => {
     await requireAuth(req);                             
-    const { loanId } = (ctx as { params: { loanId: string } }).params;
+    const { loanId } = await (ctx as { params: Promise<{ loanId: string }> }).params;
     const validId = assertUuid(loanId);
     const body = await validate(RecordPaymentSchema, req);
     const idempotencyKey = req.headers.get('idempotency-key') ?? undefined;

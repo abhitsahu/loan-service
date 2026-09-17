@@ -7,7 +7,7 @@ import { getLoan } from '@/app/service/loan/loan.service';
 export const GET = withErrorHandling(
   async (req: NextRequest, ctx: unknown) => {
     await requireAuth(req);                            
-    const { loanId } = (ctx as { params: { loanId: string } }).params;
+    const { loanId } = await (ctx as { params: Promise<{ loanId: string }> }).params;
     const validId = assertUuid(loanId);
 
     const asOfParam = new URL(req.url).searchParams.get('asOf');

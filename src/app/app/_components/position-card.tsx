@@ -23,11 +23,11 @@ export function PositionCard({ loan, position }: Props) {
   const isOverdue = parseFloat(position.overdueAmount) > 0;
 
   return (
-    <div className="card fade-up" style={{ marginBottom: '1.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+    <div className="card fade-up position-card" style={{ marginBottom: '1.5rem' }}>
+      <div className="position-card-header">
         <div>
           <h2 style={{ marginBottom: '0.25rem' }}>Loan Position</h2>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>As of {position.asOf}</p>
+          <p className="position-as-of">As of {position.asOf}</p>
         </div>
         <span className={cn('badge', loan.status === 'CLOSED' ? 'badge-green' : 'badge-blue')}>
           {loan.status === 'CLOSED' ? '✓ Closed' : '● Active'}
@@ -67,7 +67,7 @@ export function PositionCard({ loan, position }: Props) {
       </div>
 
       {/* Loan meta */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem 2rem', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+      <div className="loan-meta-grid">
         {[
           ['Principal', `₹${parseFloat(loan.principal).toLocaleString('en-IN')}`],
           ['Rate', `${loan.annualInterestRate}% p.a.`],

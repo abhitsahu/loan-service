@@ -67,8 +67,8 @@ export function PaymentForm({ loanId, onSuccess }: Props) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <form onSubmit={handleSubmit} className="payment-form-grid">
+        <div className="payment-form-row">
           <div className="form-group">
             <label className="form-label" htmlFor="pay-amount">Amount (₹)</label>
             <input
@@ -111,9 +111,8 @@ export function PaymentForm({ loanId, onSuccess }: Props) {
         <button
           id="btn-record-payment"
           type="submit"
-          className="btn btn-primary"
+          className="btn btn-primary btn-submit"
           disabled={busy}
-          style={{ alignSelf: 'flex-start', minWidth: '160px' }}
         >
           {busy
             ? <><span className="spinner" style={{ width: '1rem', height: '1rem' }} /> Processing…</>

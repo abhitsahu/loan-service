@@ -6,7 +6,13 @@ import type { GetLoanResponse, RecordPaymentResponse } from '@/app/api/model/res
 import type { ApiResponse } from '@/app/api/model/response/api-response';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface LoanSummary { id: string; status: string; createdAt: string; }
+
 export const loanClient = {
+  listLoans(): Promise<ApiResponse<LoanSummary[]>> {
+    return apiRequest<LoanSummary[]>('/loans');
+  },
+
   createLoan(req: CreateLoanRequest): Promise<ApiResponse<LoanResponse>> {
     return apiRequest<LoanResponse>('/loans', {
       method: 'POST',

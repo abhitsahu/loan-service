@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect } from 'react';
+import { use } from 'react';
 import { useAuth } from '@/app/app/providers/auth-provider';
 import { AuthGate } from '@/app/app/_components/auth-gate';
 import { useLoan } from '@/app/app/_hooks/use-loan';
@@ -16,10 +16,6 @@ function LoanDashboard({ loanId }: { loanId: string }) {
   const { user, signOut } = useAuth();
   const { loan, isLoading, error, mutate } = useLoan(loanId);
 
-  // Remember last visited loan
-  useEffect(() => {
-    if (loanId) localStorage.setItem('lastLoanId', loanId);
-  }, [loanId]);
 
   return (
     <div className="layout-root">
@@ -29,18 +25,18 @@ function LoanDashboard({ loanId }: { loanId: string }) {
           <span className="dot" />
           LoanService
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{user?.email}</span>
-          <button id="btn-sign-out" className="btn btn-ghost" onClick={signOut} style={{ padding: '0.4rem 0.875rem', fontSize: '0.875rem' }}>
+        <div className="topbar-user">
+          <span className="topbar-email" title={user?.email ?? undefined}>{user?.email}</span>
+          <button id="btn-sign-out" className="btn btn-ghost btn-sm" onClick={signOut}>
             Sign out
           </button>
         </div>
       </header>
 
       <main className="main-content">
-        <div style={{ marginBottom: '2rem' }}>
+        <div className="page-header">
           <h1>Loan Dashboard</h1>
-          <p style={{ fontFamily: 'var(--mono, monospace)', fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+          <p className="loan-id-text">
             {loanId}
           </p>
         </div>
@@ -61,38 +57,41 @@ function LoanDashboard({ loanId }: { loanId: string }) {
           <>
             <PositionCard loan={loan.loan} position={loan.position} />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '1.5rem', alignItems: 'start' }}>
+            <div className="dashboard-grid">
               {/* Schedule */}
-              <div>
-                <h2 style={{ marginBottom: '1rem' }}>Repayment Schedule</h2>
+              <section className="schedule-section">
+                <div className="section-header">
+                  <h2>Repayment Schedule</h2>
+                  <span className="table-scroll-hint">Scroll horizontally →</span>
+                </div>
                 <ScheduleTable schedule={loan.schedule} />
-              </div>
+              </section>
 
               {/* Sidebar */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <aside className="sidebar-section">
                 {loan.loan.status === 'ACTIVE' && (
                   <PaymentForm loanId={loanId} onSuccess={() => mutate()} />
                 )}
 
                 {/* Payment history */}
-                <div className="card">
+                <div className="payment-history-card">
                   <h3 style={{ marginBottom: '1rem' }}>Payment History</h3>
                   {loan.payments.length === 0 ? (
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>No payments yet.</p>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div className="payment-history-list">
                       {loan.payments.map((p) => (
-                        <div key={p.id} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                            <span style={{ fontWeight: 600 }}>
+                        <div key={p.id} className="payment-history-item">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', gap: '0.5rem' }}>
+                            <span className="mono" style={{ fontWeight: 600 }}>
                               ₹{parseFloat(p.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                             </span>
-                            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{p.paymentDate}</span>
+                            <span className="mono" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{p.paymentDate}</span>
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            Allocated: ₹{parseFloat(p.allocatedAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <span>Allocated: ₹{parseFloat(p.allocatedAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                             {parseFloat(p.unallocatedAmount) > 0 && (
-                              <span className="badge badge-amber" style={{ marginLeft: '0.5rem' }}>
+                              <span className="badge badge-amber">
                                 Surplus: ₹{parseFloat(p.unallocatedAmount).toFixed(2)}
                               </span>
                             )}
@@ -102,7 +101,7 @@ function LoanDashboard({ loanId }: { loanId: string }) {
                     </div>
                   )}
                 </div>
-              </div>
+              </aside>
             </div>
           </>
         )}

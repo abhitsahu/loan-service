@@ -1,0 +1,34 @@
+# deps
+node_modules/
+.pnp
+.pnp.js
+
+# build
+.next/
+out/
+build/
+
+# env – never commit real values
+.env
+.env.local
+.env.*.local
+*.local
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma client (generated)
+prisma/generated/
+
+# service account JSON – never download into repo
+*service-account*.json
+*serviceAccount*.json

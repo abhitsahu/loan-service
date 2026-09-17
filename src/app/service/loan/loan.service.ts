@@ -1,13 +1,14 @@
 import { prisma } from '@/app/_lib/prisma';
 import { D, toApi } from '@/lib/money';
-import { generateSchedule } from './schedule-generation.service';
-import { computePosition } from './loan-position.service';
+import { generateSchedule } from '@/app/service/loan/schedule-generation.service';
 import { CreateLoanRequest } from '@/app/api/model/request/create-loan.request';
 import { LoanResponse } from '@/app/api/model/response/loan.response';
 import { GetLoanResponse } from '@/app/api/model/response/payment.response';
 import { AppError } from '@/lib/errors';
 import { ErrorCode } from '@/app/api/model/enums/error-code';
-import type { InstallmentRow } from './loan-position.service';
+import { InstallmentStatusEnum } from '@/app/api/model/enums/installment-status';
+import { computePosition, toInstallmentRow } from '@/app/service/loan/loan-position.service';
+
 
 export async function createLoan(req: CreateLoanRequest): Promise<LoanResponse> {
   const principal = D(req.principal);
@@ -66,7 +67,6 @@ export async function createLoan(req: CreateLoanRequest): Promise<LoanResponse> 
 
 export async function getLoan(loanId: string, asOf?: Date): Promise<GetLoanResponse> {
   const asOfDate = asOf ?? new Date();
-  // Normalise asOf to UTC midnight for consistent comparison
   const asOfUTC = new Date(
     Date.UTC(asOfDate.getUTCFullYear(), asOfDate.getUTCMonth(), asOfDate.getUTCDate()),
   );
@@ -88,10 +88,8 @@ export async function getLoan(loanId: string, asOf?: Date): Promise<GetLoanRespo
   const schedule = loan.installments.map((inst) => {
     const remaining = inst.totalDue.minus(inst.amountPaid);
     const dueDateMs = inst.dueDate.getTime();
-    const isOverdue = inst.status !== 'PAID' && dueDateMs < asOfMs;
-    const daysPastDue = isOverdue
-      ? Math.floor((asOfMs - dueDateMs) / (1000 * 60 * 60 * 24))
-      : 0;
+    const isOverdue  = inst.status !== InstallmentStatusEnum.PAID && dueDateMs < asOfMs;
+    const daysPastDue = isOverdue ? Math.floor((asOfMs - dueDateMs) / 86_400_000) : 0;
 
     return {
       installmentNumber: inst.installmentNumber,
@@ -105,26 +103,14 @@ export async function getLoan(loanId: string, asOf?: Date): Promise<GetLoanRespo
       interestPaid: toApi(inst.interestPaid),
       remainingDue: toApi(remaining),
       closingBalance: toApi(inst.closingBalance),
-      status: inst.status,
+      status: inst.status as InstallmentStatusEnum,
       settledOn: inst.settledOn ? inst.settledOn.toISOString().slice(0, 10) : null,
       isOverdue,
       daysPastDue,
     };
   });
 
-  const positionRows: InstallmentRow[] = loan.installments.map((inst) => ({
-    id: inst.id,
-    installmentNumber: inst.installmentNumber,
-    dueDate: inst.dueDate,
-    principalComponent: inst.principalComponent,
-    interestComponent: inst.interestComponent,
-    totalDue: inst.totalDue,
-    principalPaid: inst.principalPaid,
-    interestPaid: inst.interestPaid,
-    amountPaid: inst.amountPaid,
-    status: inst.status,
-  }));
-
+  const positionRows = loan.installments.map(toInstallmentRow);
   const pos = computePosition(positionRows, asOfUTC);
 
   return {

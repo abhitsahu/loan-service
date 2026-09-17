@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from './providers/auth-provider';
+import { useAuth } from '@/app/app/providers/auth-provider';
 import { loanClient } from '@/app/api/client/loan-client';
 
 export default function AppLanding() {
@@ -16,9 +16,6 @@ export default function AppLanding() {
       router.replace('/app/login');
       return;
     }
-
-    // Try to find the first available loan via the API and redirect there.
-    // For now we store the last visited loanId in localStorage.
     const lastId = localStorage.getItem('lastLoanId');
     if (lastId) {
       router.replace(`/app/loans/${lastId}`);

@@ -1,7 +1,7 @@
 'use client';
 
 import type { InstallmentResponse } from '@/app/api/model/response/installment.response';
-import { cn } from '../_util/cn';
+import { cn } from '@/app/app/_util/cn';
 
 interface Props {
   schedule: InstallmentResponse[];

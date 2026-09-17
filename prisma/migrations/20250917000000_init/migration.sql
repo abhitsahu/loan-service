@@ -1,9 +1,9 @@
--- ---------- extensions & enums ----------
+-- ---------- extensions ----------
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TYPE loan_status AS ENUM ('ACTIVE', 'CLOSED');
-CREATE TYPE installment_status AS ENUM ('PENDING', 'PARTIALLY_PAID', 'PAID');
-CREATE TYPE allocation_component AS ENUM ('INTEREST', 'PRINCIPAL');
+-- Enum types are NOT defined in the DB.
+-- Valid values are enforced by CHECK constraints below.
+-- App-layer source of truth: src/app/api/model/enums/
 
 -- ---------- loans ----------
 CREATE TABLE loans (
@@ -15,10 +15,11 @@ CREATE TABLE loans (
     emi_amount            NUMERIC(14,2) NOT NULL,
     total_interest        NUMERIC(14,2) NOT NULL,
     total_payable         NUMERIC(14,2) NOT NULL,
-    status                loan_status   NOT NULL DEFAULT 'ACTIVE',
+    status                TEXT          NOT NULL DEFAULT 'ACTIVE',
     created_at            TIMESTAMPTZ   NOT NULL DEFAULT now(),
     updated_at            TIMESTAMPTZ   NOT NULL DEFAULT now(),
 
+    CONSTRAINT loans_status_valid            CHECK (status IN ('ACTIVE', 'CLOSED')),
     CONSTRAINT loans_principal_positive      CHECK (principal > 0),
     CONSTRAINT loans_principal_in_range      CHECK (principal BETWEEN 50000 AND 1000000),
     CONSTRAINT loans_rate_non_negative       CHECK (annual_interest_rate >= 0 AND annual_interest_rate < 100),
@@ -30,25 +31,26 @@ CREATE TABLE loans (
 
 -- ---------- installments ----------
 CREATE TABLE installments (
-    id                  UUID               PRIMARY KEY DEFAULT gen_random_uuid(),
-    loan_id             UUID               NOT NULL,
-    installment_number  INTEGER            NOT NULL,
-    due_date            DATE               NOT NULL,
-    opening_balance     NUMERIC(14,2)      NOT NULL,
-    principal_component NUMERIC(14,2)      NOT NULL,
-    interest_component  NUMERIC(14,2)      NOT NULL,
-    total_due           NUMERIC(14,2)      NOT NULL,
-    closing_balance     NUMERIC(14,2)      NOT NULL,
-    principal_paid      NUMERIC(14,2)      NOT NULL DEFAULT 0,
-    interest_paid       NUMERIC(14,2)      NOT NULL DEFAULT 0,
-    amount_paid         NUMERIC(14,2)      NOT NULL DEFAULT 0,
-    status              installment_status NOT NULL DEFAULT 'PENDING',
-    settled_on          DATE               NULL,
+    id                  UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+    loan_id             UUID          NOT NULL,
+    installment_number  INTEGER       NOT NULL,
+    due_date            DATE          NOT NULL,
+    opening_balance     NUMERIC(14,2) NOT NULL,
+    principal_component NUMERIC(14,2) NOT NULL,
+    interest_component  NUMERIC(14,2) NOT NULL,
+    total_due           NUMERIC(14,2) NOT NULL,
+    closing_balance     NUMERIC(14,2) NOT NULL,
+    principal_paid      NUMERIC(14,2) NOT NULL DEFAULT 0,
+    interest_paid       NUMERIC(14,2) NOT NULL DEFAULT 0,
+    amount_paid         NUMERIC(14,2) NOT NULL DEFAULT 0,
+    status              TEXT          NOT NULL DEFAULT 'PENDING',
+    settled_on          DATE          NULL,
 
     CONSTRAINT installments_loan_fk
         FOREIGN KEY (loan_id) REFERENCES loans(id)
         ON DELETE CASCADE ON UPDATE CASCADE,
 
+    CONSTRAINT installments_status_valid      CHECK (status IN ('PENDING', 'PARTIALLY_PAID', 'PAID')),
     CONSTRAINT installments_unique_seq        UNIQUE (loan_id, installment_number),
     CONSTRAINT installments_number_positive   CHECK (installment_number >= 1),
     CONSTRAINT installments_components_nonneg
@@ -92,20 +94,21 @@ CREATE TABLE payments (
 
 -- ---------- payment_allocations ----------
 CREATE TABLE payment_allocations (
-    id             UUID                 PRIMARY KEY DEFAULT gen_random_uuid(),
-    payment_id     UUID                 NOT NULL,
-    installment_id UUID                 NOT NULL,
-    component      allocation_component NOT NULL,
-    amount         NUMERIC(14,2)        NOT NULL,
-    created_at     TIMESTAMPTZ          NOT NULL DEFAULT now(),
+    id             UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+    payment_id     UUID          NOT NULL,
+    installment_id UUID          NOT NULL,
+    component      TEXT          NOT NULL,
+    amount         NUMERIC(14,2) NOT NULL,
+    created_at     TIMESTAMPTZ   NOT NULL DEFAULT now(),
 
     CONSTRAINT alloc_payment_fk
         FOREIGN KEY (payment_id) REFERENCES payments(id) ON DELETE CASCADE,
     CONSTRAINT alloc_installment_fk
         FOREIGN KEY (installment_id) REFERENCES installments(id) ON DELETE CASCADE,
 
-    CONSTRAINT alloc_amount_positive CHECK (amount > 0),
-    CONSTRAINT alloc_unique_leg UNIQUE (payment_id, installment_id, component)
+    CONSTRAINT alloc_component_valid  CHECK (component IN ('INTEREST', 'PRINCIPAL')),
+    CONSTRAINT alloc_amount_positive  CHECK (amount > 0),
+    CONSTRAINT alloc_unique_leg       UNIQUE (payment_id, installment_id, component)
 );
 
 -- ---------- indexes ----------

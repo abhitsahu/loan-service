@@ -1,4 +1,4 @@
-import { apiRequest } from './_utils/api-client';
+import { apiRequest } from '@/app/api/client/_utils/api-client';
 import type { CreateLoanRequest } from '@/app/api/model/request/create-loan.request';
 import type { RecordPaymentRequest } from '@/app/api/model/request/record-payment.request';
 import type { LoanResponse } from '@/app/api/model/response/loan.response';

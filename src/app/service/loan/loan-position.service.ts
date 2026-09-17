@@ -1,7 +1,14 @@
-import { Prisma } from '@prisma/client';
 import { ZERO } from '@/lib/money';
+import { Prisma } from '@prisma/client';
 
-export interface InstallmentRow {
+import { LoanStatusEnum } from '@/app/api/model/enums/loan-status';
+import { InstallmentStatusEnum } from '@/app/api/model/enums/installment-status';
+import type { InstallmentRow } from '@/app/api/model/domain/installment-row';
+import type { LoanPosition } from '@/app/api/model/domain/loan-position';
+
+export type { InstallmentRow, LoanPosition };
+
+export function toInstallmentRow(i: {
   id: string;
   installmentNumber: number;
   dueDate: Date;
@@ -12,29 +19,11 @@ export interface InstallmentRow {
   interestPaid: Prisma.Decimal;
   amountPaid: Prisma.Decimal;
   status: string;
+}): InstallmentRow {
+  return { ...i, status: i.status as InstallmentStatusEnum };
 }
 
-export interface LoanPosition {
-  outstandingPrincipal: Prisma.Decimal;
-  outstandingTotal: Prisma.Decimal;
-  totalPaid: Prisma.Decimal;
-  nextDueDate: Date | null;
-  nextDueAmount: Prisma.Decimal | null;
-  overdueAmount: Prisma.Decimal;
-  overdueInstallmentCount: number;
-  daysPastDue: number;
-  status: 'ACTIVE' | 'CLOSED';
-}
-
-/**
- * Derives the loan position from the installment schedule and a reference date.
- * Pure function — no DB access.
- *
- * nextDue = earliest unsettled installment (whether overdue or not).
- * nextDueAmount = remaining balance on that installment (totalDue - amountPaid).
- * overdueAmount = sum of remaining balances where dueDate < asOf AND status != PAID.
- * daysPastDue = days from oldest overdue due_date to asOf (0 if nothing overdue).
- */
+// Derives loan position from installments and reference date
 export function computePosition(rows: InstallmentRow[], asOf: Date): LoanPosition {
   let outstandingPrincipal = ZERO;
   let outstandingTotal = ZERO;
@@ -43,26 +32,23 @@ export function computePosition(rows: InstallmentRow[], asOf: Date): LoanPositio
   let overdueInstallmentCount = 0;
   let oldestOverdueDueDate: Date | null = null;
   let nextDueDate: Date | null = null;
-  let nextDueAmount: Prisma.Decimal | null = null;
+  let nextDueAmount = null as import('@prisma/client').Prisma.Decimal | null;
 
   const asOfMs = asOf.getTime();
 
   for (const row of rows) {
-    if (row.status === 'PAID') {
+    if (row.status === InstallmentStatusEnum.PAID) {
       totalPaid = totalPaid.plus(row.amountPaid);
       continue;
     }
 
-    // Unpaid or partially paid
     const remaining = row.totalDue.minus(row.amountPaid);
-    outstandingPrincipal = outstandingPrincipal.plus(
-      row.principalComponent.minus(row.principalPaid),
-    );
+    outstandingPrincipal = outstandingPrincipal.plus(row.principalComponent.minus(row.principalPaid));
     outstandingTotal = outstandingTotal.plus(remaining);
     totalPaid = totalPaid.plus(row.amountPaid);
 
     const dueDateMs = row.dueDate.getTime();
-    const isOverdue = dueDateMs < asOfMs; // strictly before asOf = overdue
+    const isOverdue = dueDateMs < asOfMs;
 
     if (isOverdue) {
       overdueAmount = overdueAmount.plus(remaining);
@@ -72,20 +58,18 @@ export function computePosition(rows: InstallmentRow[], asOf: Date): LoanPositio
       }
     }
 
-    // nextDue = earliest unsettled installment by due date (overdue or upcoming)
     if (nextDueDate === null || dueDateMs < nextDueDate.getTime()) {
       nextDueDate = row.dueDate;
       nextDueAmount = remaining;
     }
   }
 
-  // daysPastDue = calendar days from oldest overdue due date to asOf
-  let daysPastDue = 0;
-  if (oldestOverdueDueDate !== null) {
-    daysPastDue = Math.floor((asOfMs - oldestOverdueDueDate.getTime()) / (1000 * 60 * 60 * 24));
-  }
+  const daysPastDue =
+    oldestOverdueDueDate !== null
+      ? Math.floor((asOfMs - oldestOverdueDueDate.getTime()) / 86_400_000)
+      : 0;
 
-  const allPaid = rows.every((r) => r.status === 'PAID');
+  const allPaid = rows.every((r) => r.status === InstallmentStatusEnum.PAID);
 
   return {
     outstandingPrincipal,
@@ -96,6 +80,6 @@ export function computePosition(rows: InstallmentRow[], asOf: Date): LoanPositio
     overdueAmount,
     overdueInstallmentCount,
     daysPastDue,
-    status: allPaid ? 'CLOSED' : 'ACTIVE',
+    status: allPaid ? LoanStatusEnum.CLOSED : LoanStatusEnum.ACTIVE,
   };
 }

@@ -1,4 +1,3 @@
-#!/usr/bin/env tsx
 /**
  * npm run db:setup
  * Runs `prisma migrate deploy` then seeds the database.
@@ -13,4 +12,4 @@ function run(cmd: string) {
 
 run('npx prisma migrate deploy');
 run('npx prisma db seed');
-console.log('\n✅  Database is ready.');
+console.log(' Database is ready.');

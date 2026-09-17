@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Accept money as a numeric string — keeps floating point out of the system
 const decimalString = z
   .string()
   .regex(/^\d+(\.\d{1,2})?$/, 'Must be a numeric string with at most 2 decimal places');

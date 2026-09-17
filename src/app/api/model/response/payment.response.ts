@@ -1,3 +1,7 @@
+import type { LoanResponse } from '@/app/api/model/response/loan.response';
+import type { InstallmentResponse } from '@/app/api/model/response/installment.response';
+import type { PositionResponse } from '@/app/api/model/response/position.response';
+
 export interface PaymentRecord {
   id: string;
   loanId: string;
@@ -26,8 +30,8 @@ export interface RecordPaymentResponse {
 }
 
 export interface GetLoanResponse {
-  loan: import('./loan.response').LoanResponse;
-  schedule: import('./installment.response').InstallmentResponse[];
-  position: import('./position.response').PositionResponse;
+  loan: LoanResponse;
+  schedule: InstallmentResponse[];
+  position: PositionResponse;
   payments: PaymentRecord[];
 }

@@ -8,17 +8,7 @@ export interface AuthContext {
   email: string | null;
 }
 
-/**
- * Verifies the Firebase ID token in the Authorization header.
- * Throws AppError(UNAUTHENTICATED, 401) for any failure.
- *
- * Applied as the FIRST statement in every route handler — zero DB queries
- * execute for unauthenticated requests.
- *
- * Note: Route-level guards are used instead of middleware.ts because the
- * Firebase Admin SDK requires the Node.js runtime, while Next.js middleware
- * runs on the Edge runtime.
- */
+// Verifies Firebase ID token from Authorization header.
 export async function requireAuth(req: NextRequest): Promise<AuthContext> {
   const header = req.headers.get('authorization') ?? '';
 
@@ -32,10 +22,9 @@ export async function requireAuth(req: NextRequest): Promise<AuthContext> {
   }
 
   try {
-    const decoded = await adminAuth.verifyIdToken(token, /* checkRevoked */ true);
+    const decoded = await adminAuth.verifyIdToken(token, true);
     return { uid: decoded.uid, email: decoded.email ?? null };
   } catch {
-    // Expired, malformed, wrong aud/iss, or revoked token
     throw new AppError(ErrorCode.UNAUTHENTICATED, 401);
   }
 }

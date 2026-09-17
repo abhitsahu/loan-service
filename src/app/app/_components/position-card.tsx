@@ -2,7 +2,7 @@
 
 import type { PositionResponse } from '@/app/api/model/response/position.response';
 import type { LoanResponse } from '@/app/api/model/response/loan.response';
-import { cn } from '../_util/cn';
+import { cn } from '@/app/app/_util/cn';
 
 interface Props {
   loan: LoanResponse;

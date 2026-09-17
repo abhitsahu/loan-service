@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { allocatePayment, AllocatableInstallment } from '../../src/app/service/payment/payment-allocation.service';
-import { D } from '../../src/lib/money';
+import { allocatePayment } from '@/app/service/payment/payment-allocation.service';
+import type { AllocatableInstallment } from '@/app/api/model/domain/allocation';
+import { D } from '@/lib/money';
 
 /** Build a clean installment with no payments yet */
 function mkInst(

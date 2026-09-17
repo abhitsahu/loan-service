@@ -1,12 +1,12 @@
 'use client';
 
 import { use, useEffect } from 'react';
-import { useAuth } from '../../../providers/auth-provider';
-import { AuthGate } from '../../../_components/auth-gate';
-import { useLoan } from '../../../_hooks/use-loan';
-import { PositionCard } from '../../../_components/position-card';
-import { ScheduleTable } from '../../../_components/schedule-table';
-import { PaymentForm } from '../../../_components/payment-form';
+import { useAuth } from '@/app/app/providers/auth-provider';
+import { AuthGate } from '@/app/app/_components/auth-gate';
+import { useLoan } from '@/app/app/_hooks/use-loan';
+import { PositionCard } from '@/app/app/_components/position-card';
+import { ScheduleTable } from '@/app/app/_components/schedule-table';
+import { PaymentForm } from '@/app/app/_components/payment-form';
 
 interface Props {
   params: Promise<{ loanId: string }>;

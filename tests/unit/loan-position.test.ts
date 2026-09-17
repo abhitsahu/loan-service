@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { computePosition, InstallmentRow } from '../../src/app/service/loan/loan-position.service';
-import { D } from '../../src/lib/money';
+import { computePosition } from '@/app/service/loan/loan-position.service';
+import type { InstallmentRow } from '@/app/api/model/domain/installment-row';
+import { InstallmentStatusEnum } from '@/app/api/model/enums/installment-status';
+import { LoanStatusEnum } from '@/app/api/model/enums/loan-status';
+import { D } from '@/lib/money';
 
 function mkRow(
   id: string,
@@ -10,7 +13,7 @@ function mkRow(
   principal: string,
   interestPaid = '0',
   principalPaid = '0',
-  status: 'PENDING' | 'PARTIALLY_PAID' | 'PAID' = 'PENDING',
+  status: InstallmentStatusEnum = InstallmentStatusEnum.PENDING,
 ): InstallmentRow {
   const ip = D(interestPaid);
   const pp = D(principalPaid);
@@ -66,7 +69,7 @@ describe('U12 — Position after a partial payment', () => {
   // Installment 1 partially paid: ₹5,000 paid (interest 3000 + 2000 principal)
   // asOf = 2025-10-12 (11 days past installment 1 due date)
   const rows: InstallmentRow[] = [
-    mkRow('i1', 1, '2025-10-01', '3000.00', '6985.99', '3000.00', '2000.00', 'PARTIALLY_PAID'),
+    mkRow('i1', 1, '2025-10-01', '3000.00', '6985.99', '3000.00', '2000.00', InstallmentStatusEnum.PARTIALLY_PAID),
     mkRow('i2', 2, '2025-11-01', '2895.21', '7090.78'),
     mkRow('i3', 3, '2025-12-01', '2788.85', '7197.14'),
   ];
@@ -98,14 +101,14 @@ describe('U12 — Position after a partial payment', () => {
 
 describe('Closed loan', () => {
   const rows: InstallmentRow[] = [
-    mkRow('i1', 1, '2025-10-01', '3000.00', '6985.99', '3000.00', '6985.99', 'PAID'),
-    mkRow('i2', 2, '2025-11-01', '2895.21', '7090.78', '2895.21', '7090.78', 'PAID'),
+    mkRow('i1', 1, '2025-10-01', '3000.00', '6985.99', '3000.00', '6985.99', InstallmentStatusEnum.PAID),
+    mkRow('i2', 2, '2025-11-01', '2895.21', '7090.78', '2895.21', '7090.78', InstallmentStatusEnum.PAID),
   ];
 
   const pos = computePosition(rows, new Date('2025-11-15T00:00:00.000Z'));
 
   it('status = CLOSED when all installments are PAID', () => {
-    expect(pos.status).toBe('CLOSED');
+    expect(pos.status).toBe(LoanStatusEnum.CLOSED);
   });
 
   it('outstandingPrincipal = 0', () => {

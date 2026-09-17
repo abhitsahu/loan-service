@@ -2,12 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../providers/auth-provider';
+import { useAuth } from '@/app/app/providers/auth-provider';
 
-/**
- * Wraps pages that require authentication.
- * UX convenience only — the actual security is enforced server-side via requireAuth().
- */
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();

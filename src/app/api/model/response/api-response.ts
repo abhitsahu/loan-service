@@ -1,4 +1,4 @@
-import { ErrorCode } from '../enums/error-code';
+import { ErrorCode } from '@/app/api/model/enums/error-code';
 
 export interface ApiSuccess<T> {
   success: true;

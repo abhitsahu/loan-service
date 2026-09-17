@@ -1,78 +1,33 @@
 import { Prisma } from '@prisma/client';
 import { D, round2, ZERO } from '@/lib/money';
+import type { ScheduleInput, ScheduleRow, GeneratedSchedule } from '@/app/api/model/domain/schedule';
 
-export interface ScheduleInput {
-  principal: Prisma.Decimal;
-  annualInterestRate: Prisma.Decimal; // percent p.a., e.g. 18
-  tenureMonths: number;
-  disbursementDate: Date;
-}
+export type { ScheduleInput, ScheduleRow, GeneratedSchedule };
 
-export interface ScheduleRow {
-  installmentNumber: number;
-  dueDate: Date;
-  openingBalance: Prisma.Decimal;
-  principalComponent: Prisma.Decimal;
-  interestComponent: Prisma.Decimal;
-  totalDue: Prisma.Decimal;
-  closingBalance: Prisma.Decimal;
-}
-
-export interface GeneratedSchedule {
-  emiAmount: Prisma.Decimal;
-  totalInterest: Prisma.Decimal;
-  totalPayable: Prisma.Decimal;
-  rows: ScheduleRow[];
-}
-
-/** r = annualRatePct / 12 / 100 */
 export function computeMonthlyRate(annualRatePct: Prisma.Decimal): Prisma.Decimal {
   return annualRatePct.div(12).div(100);
 }
 
-/**
- * Standard EMI formula: P * r * (1+r)^n / ((1+r)^n - 1)
- * Zero-interest edge case: EMI = round2(P / n)
- * Rounded HALF_UP to 2 dp — the only rounding of the EMI.
- */
+/** Computes EMI rounded HALF_UP to 2 decimal places. */
 export function computeEmi(p: Prisma.Decimal, r: Prisma.Decimal, n: number): Prisma.Decimal {
   if (r.isZero()) {
     return round2(p.div(n));
   }
-  const one = D(1);
-  const f = one.plus(r).pow(n); // high precision, NOT rounded here
-  return round2(p.mul(r).mul(f).div(f.minus(one)));
+  const f = D(1).plus(r).pow(n);
+  return round2(p.mul(r).mul(f).div(f.minus(D(1))));
 }
 
-/**
- * disbursementDate + k months, day-of-month preserved, clamped to EOM.
- * Stored as UTC midnight DATE — no time zone shift on comparisons.
- */
+/** Computes due date advancing by k months with end-of-month clamping. */
 export function computeDueDate(disbursedOn: Date, k: number): Date {
-  const y = disbursedOn.getUTCFullYear();
-  const m = disbursedOn.getUTCMonth(); // 0-indexed
-  const day = disbursedOn.getUTCDate();
-
-  const rawMonth = m + k;
-  const targetYear = y + Math.floor(rawMonth / 12);
-  const targetMonth = rawMonth % 12; // 0-indexed
-
-  // Last day of target month
+  const rawMonth = disbursedOn.getUTCMonth() + k;
+  const targetYear = disbursedOn.getUTCFullYear() + Math.floor(rawMonth / 12);
+  const targetMonth = rawMonth % 12;
   const lastDay = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
-  const clampedDay = Math.min(day, lastDay);
-
+  const clampedDay = Math.min(disbursedOn.getUTCDate(), lastDay);
   return new Date(Date.UTC(targetYear, targetMonth, clampedDay));
 }
 
-/**
- * Builds the full amortisation schedule.
- *
- * Rounding strategy (J2):
- *   - Interest per period = round2(balance × r)  → HALF_UP
- *   - Principal (k < n)   = EMI − interest        → exact, no extra rounding
- *   - Final installment   = exact remaining balance → absorbs all accumulated variance
- *   - Closing balance is therefore exactly 0.00
- */
+/** Generates amortisation schedule. */
 export function generateSchedule(input: ScheduleInput): GeneratedSchedule {
   const { principal, annualInterestRate, tenureMonths, disbursementDate } = input;
 
@@ -93,17 +48,15 @@ export function generateSchedule(input: ScheduleInput): GeneratedSchedule {
       principalComponent = emi.minus(interestComponent);
       totalDue = emi;
     } else {
-      // Final installment: exact remaining balance clears the loan exactly
       principalComponent = balance;
       totalDue = principalComponent.plus(interestComponent);
     }
 
     const closingBalance = balance.minus(principalComponent);
-    const dueDate = computeDueDate(disbursementDate, k);
 
     rows.push({
       installmentNumber: k,
-      dueDate,
+      dueDate: computeDueDate(disbursementDate, k),
       openingBalance,
       principalComponent,
       interestComponent,
@@ -114,13 +67,9 @@ export function generateSchedule(input: ScheduleInput): GeneratedSchedule {
     balance = closingBalance;
   }
 
-  // Derived totals — persisted on loans so the API never recomputes them
   let totalInterest = ZERO;
-  for (const row of rows) {
-    totalInterest = totalInterest.plus(row.interestComponent);
-  }
+  for (const row of rows) totalInterest = totalInterest.plus(row.interestComponent);
   totalInterest = round2(totalInterest);
-  const totalPayable = round2(principal.plus(totalInterest));
 
-  return { emiAmount: emi, totalInterest, totalPayable, rows };
+  return { emiAmount: emi, totalInterest, totalPayable: round2(principal.plus(totalInterest)), rows };
 }

@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../providers/auth-provider';
+import { useAuth } from '@/app/app/providers/auth-provider';
 
 export default function LoginPage() {
   const { user, loading, signInEmail, signInGoogle } = useAuth();

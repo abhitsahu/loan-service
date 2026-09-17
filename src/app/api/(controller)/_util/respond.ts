@@ -25,10 +25,7 @@ export function fail(
   return NextResponse.json(body, { status });
 }
 
-/**
- * Wraps a route handler so AppError instances produce clean JSON error responses
- * and all other exceptions become 500 INTERNAL_ERROR (with server-side logging only).
- */
+// Wraps route handler with AppError and 500 error handling.
 export function withErrorHandling(
   handler: (req: NextRequest, ctx?: unknown) => Promise<NextResponse>,
 ) {

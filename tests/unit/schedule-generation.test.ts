@@ -4,8 +4,8 @@ import {
   computeEmi,
   computeDueDate,
   generateSchedule,
-} from '../../src/app/service/loan/schedule-generation.service';
-import { D } from '../../src/lib/money';
+} from '@/app/service/loan/schedule-generation.service';
+import { D } from '@/lib/money';
 
 const P = D('200000');
 const r = D('0.015'); // 18% p.a. / 12

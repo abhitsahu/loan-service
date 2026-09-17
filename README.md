@@ -21,10 +21,11 @@ npm run db:setup
 npm run dev
 ```
 
-The seed script prints the demo loan ID. Navigate to:
+Then open:
 ```
-http://localhost:3000/app/loans/<loan-id>
+http://localhost:3000/app
 ```
+This redirects automatically to the seeded demo loan. You can also open `http://localhost:3000/app/docs` to browse the interactive API docs.
 
 ---
 

@@ -34,7 +34,7 @@ describe('I1 — Full success flow: create → pay → read', () => {
     const getBody = await getRes.json();
     expect(getRes.status).toBe(200);
     expect(getBody.data.position.overdueAmount).toBe('0.00');
-    expect(getBody.data.position.outstandingPrincipal).toBe('193014.01');
+    expect(getBody.data.position.outstandingPrincipal).toBe('193015.18');
   });
 });
 

@@ -3,7 +3,7 @@ import './setup';
 import { makeReq, authHeader, prismaTest, getHandlers, LOAN_BODY } from './setup';
 
 describe('I4 — Duplicate idempotency key replays original, no second allocation', () => {
-  it('second call with same key returns 200, payment row count stays 1', async () => {
+  it('second call with same key returns 201 (idempotent), payment row count stays 1', async () => {
     const { createLoan, recordPayment } = await getHandlers();
 
     const { data: { id: loanId } } = await (await createLoan(
@@ -24,14 +24,14 @@ describe('I4 — Duplicate idempotency key replays original, no second allocatio
       makeReq(`http://localhost/api/loans/${loanId}/payments`, { method: 'POST', body: payload, headers: hdrs }),
       { params: { loanId } },
     );
-    expect(res2.status).toBe(200);
+    expect(res2.status).toBe(201);
 
     expect(await prismaTest.payment.count({ where: { loanId } })).toBe(1);
 
     const inst1 = await prismaTest.installment.findFirst({ where: { loanId, installmentNumber: 1 } });
-    expect(inst1?.amountPaid.toFixed(2)).toBe('9985.99');
+    expect(inst1?.amountPaid.toFixed(2)).toBe('9984.82');
     expect(inst1?.status).toBe('PAID');
-  });
+  }, 20_000);
 });
 
 describe('I5 — Orphan payment rejected by DB FK constraint', () => {

@@ -34,43 +34,30 @@ export async function recordPayment(
     req.idempotencyKey ??
     deriveIdempotencyKey(loanId, req.amount, req.paymentDate, req.reference);
 
+  const existingPayment = await prisma.payment.findUnique({
+    where: { loanId_idempotencyKey: { loanId, idempotencyKey } },
+    include: {
+      allocations: { include: { installment: { select: { installmentNumber: true } } } },
+    },
+  });
+  if (existingPayment) {
+    const allInst = await prisma.installment.findMany({ where: { loanId }, orderBy: { installmentNumber: 'asc' } });
+    const pos = computePosition(allInst.map(toInstallmentRow), new Date());
+    return buildResponse(existingPayment, existingPayment.allocations, toPositionSummary(pos));
+  }
+
   return prisma.$transaction(
     async (tx) => {
       let payment: Prisma.PaymentGetPayload<Record<string, never>>;
-      let isDuplicate = false;
-
       try {
         payment = await tx.payment.create({
           data: { loanId, amount, paymentDate, idempotencyKey, allocatedAmount: D(0), unallocatedAmount: amount },
         });
       } catch (err: unknown) {
-        if (err instanceof Prisma.PrismaClientKnownRequestError) {
-          if (err.code === 'P2002') {
-            isDuplicate = true;
-            payment = null as unknown as Prisma.PaymentGetPayload<Record<string, never>>;
-          } else if (err.code === 'P2003') {
-            throw new AppError(ErrorCode.LOAN_NOT_FOUND, 404);
-          } else {
-            throw err;
-          }
-        } else {
-          throw err;
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
+          throw new AppError(ErrorCode.LOAN_NOT_FOUND, 404);
         }
-      }
-
-      if (isDuplicate) {
-        const original = await tx.payment.findUnique({
-          where: { loanId_idempotencyKey: { loanId, idempotencyKey } },
-          include: {
-            allocations: { include: { installment: { select: { installmentNumber: true } } } },
-          },
-        });
-        if (!original) throw new AppError(ErrorCode.INTERNAL_ERROR, 500);
-
-        const allInst = await tx.installment.findMany({ where: { loanId }, orderBy: { installmentNumber: 'asc' } });
-        const pos = computePosition(allInst.map(toInstallmentRow), new Date());
-
-        return buildResponse(original, original.allocations, toPositionSummary(pos));
+        throw err;
       }
 
       const loan = await tx.loan.findUnique({ where: { id: loanId } });
@@ -158,7 +145,6 @@ export async function recordPayment(
         toPositionSummary(pos),
       );
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
 }
 

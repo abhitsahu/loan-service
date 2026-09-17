@@ -7,7 +7,7 @@ A full-stack loan repayment management system built with Next.js 15, PostgreSQL 
 ## Quick Start
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/abhitsahu/loan-service.git
 cd loan-service
 npm install
 
@@ -26,6 +26,8 @@ Then open:
 http://localhost:3000/app
 ```
 This redirects automatically to the seeded demo loan. You can also open `http://localhost:3000/app/docs` to browse the interactive API docs.
+
+> **Test account** — email and password are provided in the submission email (not committed per assessment guidelines).
 
 ---
 
@@ -143,18 +145,6 @@ FIREBASE_PRIVATE_KEY=""   # literal \n for newlines, wrap in quotes
 # Integration test DB (direct connection)
 TEST_DATABASE_URL=""
 ```
-
-### Firebase Setup
-
-1. Go to [console.firebase.google.com](https://console.firebase.google.com) → create project
-2. **Authentication** → Sign-in methods → enable Email/Password + Google
-3. **Project Settings** → Your Apps → Add Web App → copy the 4 `NEXT_PUBLIC_*` values
-4. **Project Settings** → Service Accounts → Generate new private key → open the JSON file, copy:
-   - `project_id` → `FIREBASE_PROJECT_ID`
-   - `client_email` → `FIREBASE_CLIENT_EMAIL`
-   - `private_key` (whole string including `-----BEGIN...-----END-----`) → `FIREBASE_PRIVATE_KEY` (replace real newlines with `\n`)
-
----
 
 ## Commit History
 

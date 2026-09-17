@@ -27,8 +27,6 @@ http://localhost:3000/app
 ```
 This redirects automatically to the seeded demo loan. You can also open `http://localhost:3000/app/docs` to browse the interactive API docs.
 
-> **Test account** — email and password are provided in the submission email (not committed per assessment guidelines).
-
 ---
 
 ## Test Command

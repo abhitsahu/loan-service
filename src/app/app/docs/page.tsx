@@ -1,9 +1,17 @@
 'use client';
 
 import { useEffect } from 'react';
+import { onIdTokenChanged } from 'firebase/auth';
+import { auth } from '@/app/_lib/firebase-client';
 
 export default function DocsPage() {
   useEffect(() => {
+    // Live token — kept fresh by onIdTokenChanged (Firebase rotates every ~1 h)
+    let token = '';
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      token = user ? await user.getIdToken() : '';
+    });
+
     // Override app's dark theme for this page only
     const prev = {
       bg: document.body.style.background,
@@ -28,12 +36,17 @@ export default function DocsPage() {
         deepLinking: true,
         defaultModelsExpandDepth: 1,
         defaultModelExpandDepth: 1,
+        // Inject the Firebase ID token automatically — no manual Authorize needed
+        requestInterceptor: (req: { headers: Record<string, string> }) => {
+          if (token) req.headers['Authorization'] = `Bearer ${token}`;
+          return req;
+        },
       });
     };
     document.body.appendChild(script);
 
-    // Restore app styles on unmount
     return () => {
+      unsubscribe();
       document.body.style.background = prev.bg;
       document.body.style.color = prev.color;
       document.head.removeChild(link);
